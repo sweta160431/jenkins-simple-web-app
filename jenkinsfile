@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    
+    environment {
+        IMAGE_NAME = "web-app"
+    }
+    
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'master', url: 'https://github.com/sweta160431/jenkins-simple-web-app.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t ${IMAGE_NAME} .'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "dockerHubCreds", passwordVariable: "dockerHubPass", usernameVariable: "dockerHubUser")]) {
+                    // Using double quotes and escaping special characters
+                    sh """
+                        docker login -u ${dockerHubUser} -p '${dockerHubPass}'
+                        docker tag ${IMAGE_NAME} ${dockerHubUser}/webapp:latest
+                        docker push ${dockerHubUser}/webapp:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Server') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "dockerHubCreds", passwordVariable: "dockerHubPass", usernameVariable: "dockerHubUser")]) {
+                    // Using double quotes and escaping special characters
+                    sh """
+                        docker pull ${dockerHubUser}/webapp:latest
+                        docker run -d -p 5000:5000 --name webapp ${dockerHubUser}/webapp:latest
+                    """
+                }
+            }
+        }
+    }
+}

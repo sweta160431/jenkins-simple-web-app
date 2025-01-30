@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Automate code testing and deployment using a
+    return "Hello, Automate code testing and deployment using a
 Continuous Integration/Continuous Deployment (CI/CD) pipeline!"
 
 if __name__ == "__main__":
